@@ -1,0 +1,70 @@
+mql5
+/*
+ * M5 Breakout Indicator
+ * Developer: Forex Robot Easy Team
+ * Site: forexroboteasy.com
+ */
+
+#property copyright 'Forex Robot Easy Team'
+#property link    'forexroboteasy.com'
+#property version '1.0'
+
+// Input parameters
+input int BreakoutPeriod = 20; // Breakout period in minutes
+input double RiskPercentage = 2.0; // Risk percentage for stop loss
+
+// Global variables
+datetime lastBarTime = 0; // Last bar time
+double previousHigh = 0; // Previous high price
+double previousLow = 0; // Previous low price
+
+// Initialization function
+int OnInit()
+{
+    return(INIT_SUCCEEDED);
+}
+
+// Deinitialization function
+void OnDeinit(const int reason)
+{
+
+}
+
+// Start function
+void OnStart()
+{
+    // Check if a new bar has formed
+    if (lastBarTime != Time[0])
+    {
+        // Check for breakout
+        if (High[1] < previousHigh && Low[1] > previousLow)
+        {
+            double stopLoss = NormalizeDouble(previousLow - (previousHigh - previousLow) * RiskPercentage / 100, Digits);
+            double takeProfit = NormalizeDouble(previousHigh + (previousHigh - previousLow) * RiskPercentage / 100, Digits);
+
+            // Place order
+            int ticket = OrderSend(Symbol(), OP_BUY, 0.01, Ask, 3, stopLoss, takeProfit, 'Breakout', 0, 0, clrGreen);
+            if (ticket > 0)
+            {
+                Print('Buy order placed successfully');
+            }
+            else
+            {
+                Print('Failed to place buy order. Error code:', GetLastError());
+            }
+        }
+        
+        // Update previous high and low
+        previousHigh = High[1];
+        previousLow = Low[1];
+
+        // Update last bar time
+        lastBarTime = Time[0];
+    }
+}
+
+// Custom function to calculate normalized double value
+double NormalizeDouble(double value, int digits)
+{
+    return(MathRound(value * MathPow(10, digits)) / MathPow(10, digits));
+}
